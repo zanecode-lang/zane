@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MP4 &amp; YouTube to MP3 Converter</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      min-height: 100vh;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      background: #0d121d;
+      color: #eef2f7;
+      padding: 24px 16px 48px;
+    }
+    .container {
+      max-width: 780px;
+      margin: 0 auto;
+    }
+    header {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+    header h1 {
+      font-size: 26px;
+      font-weight: 800;
+      color: #ffffff;
+      margin-bottom: 6px;
+    }
+    header p {
+      font-size: 14px;
+      color: #9aa7bd;
+    }
+
+    .tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+    .tab-btn {
+      padding: 13px 14px;
+      border-radius: 12px;
+      border: 1px solid #263248;
+      background: #141c2c;
+      color: #b4c0d4;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .tab-btn.active {
+      background: #2563eb;
+      border-color: #3b82f6;
+      color: #ffffff;
+    }
+
+    .card {
+      background: #141c2c;
+      border: 1px solid #263248;
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 18px;
+    }
+    .section-title {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: #ffffff;
+    }
+    .desc {
+      font-size: 13px;
+      color: #9aa7bd;
+      line-height: 1.55;
+      margin-bottom: 14px;
+    }
+
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+    input[type="text"], select {
+      background: #0d121d;
+      border: 1px solid #2e3d58;
+      color: #eef2f7;
+      border-radius: 10px;
+      padding: 11px 13px;
+      font-size: 14px;
+      outline: none;
+    }
+    input[type="text"] {
+      flex: 1;
+      min-width: 220px;
+    }
+    input[type="text"]:focus, select:focus {
+      border-color: #3b82f6;
+    }
+
+    .btn {
+      padding: 11px 16px;
+      border-radius: 10px;
+      border: none;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity 0.15s ease, transform 0.1s ease;
+    }
+    .btn:active { transform: scale(0.98); }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .btn-primary { background: #2563eb; color: #fff; }
+    .btn-success { background: #16a34a; color: #fff; }
+    .btn-secondary { background: #263248; color: #eef2f7; }
+
+    .file-info {
+      margin-top: 12px;
+      font-size: 13px;
+      color: #cbd5e1;
+      word-break: break-all;
+    }
+
+    .quality-box {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid #232f46;
+    }
+
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    @media (max-width: 600px) {
+      .steps { grid-template-columns: repeat(2, 1fr); }
+    }
+    .step {
+      background: #0d121d;
+      border: 1px solid #243047;
+      border-radius: 10px;
+      padding: 9px 10px;
+      font-size: 12px;
+      color: #8b98b0;
+    }
+    .step.active {
+      border-color: #3b82f6;
+      color: #ffffff;
+      font-weight: 700;
+    }
+    .step.done {
+      border-color: #16a34a;
+      color: #86efac;
+    }
+
+    .progress-wrap {
+      width: 100%;
+      height: 10px;
+      background: #0d121d;
+      border-radius: 999px;
+      overflow: hidden;
+      border: 1px solid #243047;
+      margin-bottom: 10px;
+    }
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      background: #2563eb;
+      transition: width 0.2s ease;
+    }
+    .status-text {
+      font-size: 13px;
+      color: #cbd5e1;
+      min-height: 20px;
+    }
+    .error-text {
+      color: #f87171;
+      font-size: 13px;
+      margin-top: 8px;
+      white-space: pre-line;
+    }
+
+    .result-box {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid #232f46;
+      display: none;
+    }
+    audio {
+      width: 100%;
+      margin: 10px 0 14px;
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.72);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 999;
+    }
+    .modal-backdrop.show { display: flex; }
+    .modal {
+      max-width: 440px;
+      width: 100%;
+      background: #162033;
+      border: 1px solid #324363;
+      border-radius: 16px;
+      padding: 22px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    }
+    .modal h2 {
+      font-size: 18px;
+      margin-bottom: 10px;
+      color: #ffffff;
+    }
+    .modal p {
+      font-size: 13.5px;
+      color: #b8c4d8;
+      line-height: 1.6;
+      margin-bottom: 18px;
+    }
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>MP4 &amp; YouTube sang MP3</h1>
+      <p>Chọn video từ album/thiết bị hoặc dán link YouTube / link MP4 để lọc và tải file MP3.</p>
+    </header>
+
+    <div class="tabs">
+      <button id="tabAlbum" class="tab-btn active" type="button">Mục 1: Chọn video từ album</button>
+      <button id="tabUrl" class="tab-btn" type="button">Mục 2: Đọc link YouTube / MP4</button>
+    </div>
+
+    <section id="panelAlbum" class="card">
+      <div class="section-title">Mục 1 — Chọn video có sẵn trên thiết bị</div>
+      <p class="desc">
+        Nhấn nút bên dưới để xác nhận quyền truy cập album/thư viện video trên thiết bị, chọn video MP4 rồi chuyển đổi sang MP3.
+      </p>
+      <div class="row">
+        <button id="btnRequestAlbum" class="btn btn-primary" type="button">Cho phép truy cập &amp; chọn video</button>
+        <input id="videoFileInput" type="file" accept="video/mp4,video/*" class="hidden" />
+      </div>
+      <div id="selectedFileInfo" class="file-info">Chưa chọn video nào.</div>
+    </section>
+
+    <section id="panelUrl" class="card hidden">
+      <div class="section-title">Mục 2 — Lọc MP3 từ link YouTube hoặc link MP4</div>
+      <p class="desc">
+        Dán link YouTube (<code>youtube.com/watch?v=...</code>, <code>youtu.be/...</code>) hoặc link trực tiếp <code>.mp4</code> rồi bấm <strong>Đọc &amp; chuẩn bị lọc</strong>.
+      </p>
+      <div class="row">
+        <input id="mp4UrlInput" type="text" placeholder="https://www.youtube.com/watch?v=... hoặc https://example.com/video.mp4" />
+        <button id="btnLoadUrl" class="btn btn-primary" type="button">Đọc &amp; chuẩn bị lọc</button>
+      </div>
+      <div id="urlFileInfo" class="file-info">Chưa nhập đường link.</div>
+      <div id="urlError" class="error-text"></div>
+    </section>
+
+    <section class="card">
+      <div class="section-title">Cấu hình xuất MP3</div>
+      <div class="quality-box">
+        <label for="bitrateSelect" style="font-size: 14px; font-weight: 600;">Chất lượng âm thanh MP3:</label>
+        <select id="bitrateSelect">
+          <option value="128">128 kbps — Tiêu chuẩn (nhẹ file)</option>
+          <option value="192" selected>192 kbps — Chất lượng cao (khuyên dùng)</option>
+          <option value="256">256 kbps — Rất cao</option>
+          <option value="320">320 kbps — Cực cao</option>
+        </select>
+        <button id="btnConvert" class="btn btn-success" type="button" disabled>Chuyển sang MP3</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="section-title">Tiến trình chuyển đổi</div>
+      <div class="steps">
+        <div id="step1" class="step">1. Lấy nguồn</div>
+        <div id="step2" class="step">2. Giải mã / Tách</div>
+        <div id="step3" class="step">3. Mã hóa MP3</div>
+        <div id="step4" class="step">4. Sẵn sàng tải về</div>
+      </div>
+      <div class="progress-wrap">
+        <div id="progressBar" class="progress-bar"></div>
+      </div>
+      <div id="statusText" class="status-text">Đang chờ nguồn video hoặc link...</div>
+      <div id="convertError" class="error-text"></div>
+
+      <div id="resultBox" class="result-box">
+        <div style="font-size: 14px; font-weight: 700; color: #86efac;">Đã tạo xong file MP3!</div>
+        <audio id="audioPreview" controls></audio>
+        <div class="row">
+          <a id="downloadLink" class="btn btn-success" download="audio.mp3" style="text-decoration: none;">Tải file MP3 về máy</a>
+          <span id="outputMeta" style="font-size: 13px; color: #9aa7bd;"></span>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div id="albumPermissionModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal">
+      <h2 id="modalTitle">Cho phép truy cập album trên thiết bị?</h2>
+      <p>
+        Website cần bạn mở bộ chọn tệp/album trên thiết bị để lấy video <strong>.mp4</strong> bạn chọn và tách âm thanh thành file <strong>.mp3</strong> ngay trên trình duyệt. Toàn bộ quá trình xử lý diễn ra cục bộ trên thiết bị của bạn.
+      </p>
+      <div class="modal-actions">
+        <button id="btnDenyAlbum" class="btn btn-secondary" type="button">Từ chối</button>
+        <button id="btnAllowAlbum" class="btn btn-primary" type="button">Cho phép</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/lamejs@1.2.1/lame.min.js"></script>
+  <script>
+    (() => {
+      const tabAlbum = document.getElementById("tabAlbum");
+      const tabUrl = document.getElementById("tabUrl");
+      const panelAlbum = document.getElementById("panelAlbum");
+      const panelUrl = document.getElementById("panelUrl");
+
+      const btnRequestAlbum = document.getElementById("btnRequestAlbum");
+      const videoFileInput = document.getElementById("videoFileInput");
+      const selectedFileInfo = document.getElementById("selectedFileInfo");
+      const albumModal = document.getElementById("albumPermissionModal");
+      const btnAllowAlbum = document.getElementById("btnAllowAlbum");
+      const btnDenyAlbum = document.getElementById("btnDenyAlbum");
+
+      const mp4UrlInput = document.getElementById("mp4UrlInput");
+      const btnLoadUrl = document.getElementById("btnLoadUrl");
+      const urlFileInfo = document.getElementById("urlFileInfo");
+      const urlError = document.getElementById("urlError");
+
+      const bitrateSelect = document.getElementById("bitrateSelect");
+      const btnConvert = document.getElementById("btnConvert");
+      const progressBar = document.getElementById("progressBar");
+      const statusText = document.getElementById("statusText");
+      const convertError = document.getElementById("convertError");
+      const resultBox = document.getElementById("resultBox");
+      const audioPreview = document.getElementById("audioPreview");
+      const downloadLink = document.getElementById("downloadLink");
+      const outputMeta = document.getElementById("outputMeta");
+
+      const stepEls = [
+        document.getElementById("step1"),
+        document.getElementById("step2"),
+        document.getElementById("step3"),
+        document.getElementById("step4")
+      ];
+
+      let currentSource = null;
+      let lastBlobUrl = null;
+      let isConverting = false;
+
+      function switchTab(mode) {
+        const isAlbum = mode === "album";
+        tabAlbum.classList.toggle("active", isAlbum);
+        tabUrl.classList.toggle("active", !isAlbum);
+        panelAlbum.classList.toggle("hidden", !isAlbum);
+        panelUrl.classList.toggle("hidden", isAlbum);
+      }
+
+      tabAlbum.addEventListener("click", () => switchTab("album"));
+      tabUrl.addEventListener("click", () => switchTab("url"));
+
+      function setStepState(stepIndex, state) {
+        const el = stepEls[stepIndex - 1];
+        if (!el) return;
+        el.classList.remove("active", "done");
+        if (state) el.classList.add(state);
+      }
+
+      function resetSteps() {
+        stepEls.forEach(el => el.classList.remove("active", "done"));
+        progressBar.style.width = "0%";
+        convertError.textContent = "";
+        resultBox.style.display = "none";
+      }
+
+      function setProgress(percent, message) {
+        progressBar.style.width = `${Math.max(0, Math.min(100, percent))}%`;
+        if (message) statusText.textContent = message;
+      }
+
+      function sanitizeBaseName(name) {
+        const cleaned = (name || "audio")
+          .split("?")[0]
+          .split("#")[0]
+          .split("/")
+          .pop()
+          .replace(/\.[^/.]+$/, "")
+          .replace(/[^a-zA-Z0-9_-]+/g, "_")
+          .replace(/^_+|_+$/g, "");
+        return cleaned || "audio";
+      }
+
+      function formatBytes(bytes) {
+        if (!bytes) return "0 KB";
+        const mb = bytes / (1024 * 1024);
+        return mb >= 1 ? `${mb.toFixed(2)} MB` : `${(bytes / 1024).toFixed(1)} KB`;
+      }
+
+      function isYoutubeLink(urlObj) {
+        const host = urlObj.hostname.replace(/^www\./, "").toLowerCase();
+        return (
+          host === "youtube.com" ||
+          host.endsWith(".youtube.com") ||
+          host === "youtu.be" ||
+          host === "music.youtube.com"
+        );
+      }
+
+      btnRequestAlbum.addEventListener("click", () => {
+        if (isConverting) return;
+        albumModal.classList.add("show");
+      });
+
+      btnDenyAlbum.addEventListener("click", () => {
+        albumModal.classList.remove("show");
+        statusText.textContent = "Bạn đã từ chối mở album. Có thể thử lại hoặc dùng Mục 2.";
+      });
+
+      btnAllowAlbum.addEventListener("click", () => {
+        albumModal.classList.remove("show");
+        videoFileInput.value = "";
+        videoFileInput.click();
+      });
+
+      albumModal.addEventListener("click", (e) => {
+        if (e.target === albumModal) albumModal.classList.remove("show");
+      });
+
+      videoFileInput.addEventListener("change", async () => {
+        const file = videoFileInput.files && videoFileInput.files[0];
+        if (!file) return;
+
+        resetSteps();
+        setStepState(1, "active");
+        setProgress(15, `Đang đọc video "${file.name}" từ thiết bị...`);
+
+        try {
+          const arrayBuffer = await file.arrayBuffer();
+          currentSource = {
+            type: "buffer",
+            arrayBuffer,
+            baseName: sanitizeBaseName(file.name)
+          };
+          selectedFileInfo.textContent = `Đã chọn: ${file.name} (${formatBytes(file.size)})`;
+          btnConvert.disabled = false;
+          setStepState(1, "done");
+          setProgress(25, "Đã sẵn sàng chuyển video sang MP3. Hãy chọn chất lượng và bấm Chuyển sang MP3.");
+        } catch {
+          currentSource = null;
+          btnConvert.disabled = true;
+          setStepState(1, "");
+          convertError.textContent = "Không thể đọc tệp video đã chọn.";
+          setProgress(0, "Lỗi khi đọc tệp video.");
+        }
+      });
+
+      btnLoadUrl.addEventListener("click", async () => {
+        if (isConverting) return;
+        const rawUrl = mp4UrlInput.value.trim();
+        urlError.textContent = "";
+
+        if (!rawUrl) {
+          urlError.textContent = "Vui lòng nhập đường link YouTube hoặc MP4.";
+          return;
+        }
+
+        let parsedUrl;
+        try {
+          parsedUrl = new URL(rawUrl);
+          if (!["http:", "https:"].includes(parsedUrl.protocol)) {
+            throw new Error("Invalid protocol");
+          }
+        } catch {
+          urlError.textContent = "Đường link không hợp lệ (cần bắt đầu bằng http:// hoặc https://).";
+          return;
+        }
+
+        resetSteps();
+        setStepState(1, "active");
+
+        if (isYoutubeLink(parsedUrl)) {
+          currentSource = {
+            type: "youtube",
+            url: parsedUrl.href,
+            baseName: "youtube_audio"
+          };
+          urlFileInfo.textContent = `Đã nhận link YouTube: ${parsedUrl.href}`;
+          btnConvert.disabled = false;
+          setStepState(1, "done");
+          setProgress(25, "Đã nhận link YouTube. Hãy chọn chất lượng MP3 và bấm Chuyển sang MP3.");
+          return;
+        }
+
+        btnLoadUrl.disabled = true;
+        btnConvert.disabled = true;
+        setProgress(12, "Đang tải dữ liệu video từ đường link MP4...");
+
+        try {
+          const response = await fetch(parsedUrl.href);
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          const arrayBuffer = await response.arrayBuffer();
+          if (!arrayBuffer || arrayBuffer.byteLength < 64) {
+            throw new Error("Dữ liệu trả về rỗng hoặc không phải file video hợp lệ.");
+          }
+
+          currentSource = {
+            type: "buffer",
+            arrayBuffer,
+            baseName: sanitizeBaseName(parsedUrl.pathname)
+          };
+          urlFileInfo.textContent = `Đã đọc link: ${parsedUrl.href} (${formatBytes(arrayBuffer.byteLength)})`;
+          btnConvert.disabled = false;
+          setStepState(1, "done");
+          setProgress(25, "Đã lọc xong nguồn video từ link. Hãy chọn chất lượng và bấm Chuyển sang MP3.");
+        } catch {
+          currentSource = null;
+          urlFileInfo.textContent = "Không đọc được đường link MP4.";
+          urlError.textContent = "Không thể tải trực tiếp link này (có thể do link sai hoặc máy chủ nguồn chặn CORS).";
+          setStepState(1, "");
+          setProgress(0, "Đọc đường link thất bại.");
+        } finally {
+          btnLoadUrl.disabled = false;
+        }
+      });
+
+      function floatTo16BitPCM(float32Array) {
+        const out = new Int16Array(float32Array.length);
+        for (let i = 0; i < float32Array.length; i++) {
+          const s = Math.max(-1, Math.min(1, float32Array[i]));
+          out[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
+        }
+        return out;
+      }
+
+      function yieldToUI() {
+        return new Promise(resolve => setTimeout(resolve, 0));
+      }
+
+      function applyOutputBlob(mp3Blob, fileName) {
+        if (lastBlobUrl) URL.revokeObjectURL(lastBlobUrl);
+        lastBlobUrl = URL.createObjectURL(mp3Blob);
+        audioPreview.src = lastBlobUrl;
+        downloadLink.href = lastBlobUrl;
+        downloadLink.download = fileName;
+        outputMeta.textContent = `Tên file: ${fileName} • Dung lượng: ${formatBytes(mp3Blob.size)}`;
+        setStepState(4, "done");
+        setProgress(100, "Hoàn tất! Bạn có thể nghe thử hoặc bấm tải file MP3 về máy.");
+        resultBox.style.display = "block";
+      }
+
+      btnConvert.addEventListener("click", async () => {
+        if (!currentSource || isConverting) return;
+
+        isConverting = true;
+        btnConvert.disabled = true;
+        btnRequestAlbum.disabled = true;
+        btnLoadUrl.disabled = true;
+        bitrateSelect.disabled = true;
+        convertError.textContent = "";
+        resultBox.style.display = "none";
+
+        const kbps = Number(bitrateSelect.value) || 192;
+
+        if (currentSource.type === "youtube") {
+          try {
+            setStepState(1, "done");
+            setStepState(2, "active");
+            setStepState(3, "active");
+            setProgress(45, `Đang lọc & mã hóa MP3 (${kbps} kbps) từ link YouTube...`);
+
+            const resp = await fetch("/api/ytb-to-mp3", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ url: currentSource.url, bitrate: kbps })
+            });
+
+            if (!resp.ok) {
+              let errMsg = `Lỗi máy chủ (${resp.status})`;
+              try {
+                const errJson = await resp.json();
+                if (errJson && errJson.error) errMsg = errJson.error;
+              } catch {}
+              throw new Error(errMsg);
+            }
+
+            setStepState(2, "done");
+            setStepState(3, "done");
+            setStepState(4, "active");
+            setProgress(92, "Đang nhận file MP3...");
+
+            const mp3Blob = await resp.blob();
+            const headerName = resp.headers.get("X-Output-Filename");
+            const fileName = headerName
+              ? decodeURIComponent(headerName)
+              : `${currentSource.baseName}_${kbps}kbps.mp3`;
+
+            applyOutputBlob(mp3Blob, fileName);
+          } catch (err) {
+            convertError.textContent = err?.message || "Không thể lọc MP3 từ link YouTube.";
+            setProgress(0, "Chuyển đổi thất bại.");
+          } finally {
+            isConverting = false;
+            btnConvert.disabled = !currentSource;
+            btnRequestAlbum.disabled = false;
+            btnLoadUrl.disabled = false;
+            bitrateSelect.disabled = false;
+          }
+          return;
+        }
+
+        if (!window.lamejs) {
+          convertError.textContent = "Không tải được thư viện mã hóa MP3 (lamejs). Kiểm tra kết nối mạng.";
+          isConverting = false;
+          btnConvert.disabled = !currentSource;
+          btnRequestAlbum.disabled = false;
+          btnLoadUrl.disabled = false;
+          bitrateSelect.disabled = false;
+          return;
+        }
+
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        let audioCtx = null;
+
+        try {
+          setStepState(1, "done");
+          setStepState(2, "active");
+          setProgress(35, "Bước 2/4: Đang giải mã luồng âm thanh từ video...");
+          await yieldToUI();
+
+          audioCtx = new AudioCtx();
+          const bufferCopy = currentSource.arrayBuffer.slice(0);
+          const audioBuffer = await audioCtx.decodeAudioData(bufferCopy);
+
+          const numChannels = Math.min(2, audioBuffer.numberOfChannels);
+          const sampleRate = audioBuffer.sampleRate;
+
+          if (numChannels === 0 || audioBuffer.length === 0) {
+            throw new Error("Video này không chứa âm thanh.");
+          }
+
+          setStepState(2, "done");
+          setStepState(3, "active");
+          setProgress(50, `Bước 3/4: Đang mã hóa MP3 (${kbps} kbps)...`);
+          await yieldToUI();
+
+          const leftPCM = floatTo16BitPCM(audioBuffer.getChannelData(0));
+          const rightPCM = numChannels > 1 ? floatTo16BitPCM(audioBuffer.getChannelData(1)) : null;
+
+          const mp3Encoder = new lamejs.Mp3Encoder(numChannels, sampleRate, kbps);
+          const mp3Chunks = [];
+          const blockSize = 1152;
+          const totalSamples = leftPCM.length;
+
+          for (let i = 0; i < totalSamples; i += blockSize) {
+            const leftChunk = leftPCM.subarray(i, i + blockSize);
+            let mp3buf;
+
+            if (numChannels === 2 && rightPCM) {
+              const rightChunk = rightPCM.subarray(i, i + blockSize);
+              mp3buf = mp3Encoder.encodeBuffer(leftChunk, rightChunk);
+            } else {
+              mp3buf = mp3Encoder.encodeBuffer(leftChunk);
+            }
+
+            if (mp3buf && mp3buf.length > 0) {
+              mp3Chunks.push(new Uint8Array(mp3buf));
+            }
+
+            if (i % (blockSize * 40) === 0) {
+              const pct = 50 + Math.round((i / totalSamples) * 42);
+              setProgress(pct, `Bước 3/4: Đang mã hóa MP3 (${kbps} kbps)... ${Math.round((i / totalSamples) * 100)}%`);
+              await yieldToUI();
+            }
+          }
+
+          const endBuf = mp3Encoder.flush();
+          if (endBuf && endBuf.length > 0) {
+            mp3Chunks.push(new Uint8Array(endBuf));
+          }
+
+          setStepState(3, "done");
+          setStepState(4, "active");
+          setProgress(96, "Bước 4/4: Đang đóng gói file MP3 để tải về...");
+          await yieldToUI();
+
+          const mp3Blob = new Blob(mp3Chunks, { type: "audio/mpeg" });
+          const fileName = `${currentSource.baseName}_${kbps}kbps.mp3`;
+          applyOutputBlob(mp3Blob, fileName);
+        } catch (err) {
+          convertError.textContent = err?.message || "Không thể chuyển đổi video này sang MP3.";
+          setProgress(0, "Chuyển đổi thất bại.");
+        } finally {
+          if (audioCtx && audioCtx.state !== "closed") {
+            audioCtx.close().catch(() => {});
+          }
+          isConverting = false;
+          btnConvert.disabled = !currentSource;
+          btnRequestAlbum.disabled = false;
+          btnLoadUrl.disabled = false;
+          bitrateSelect.disabled = false;
+        }
+      });
+    })();
+  </script>
+</body>
+</html>
