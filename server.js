@@ -17,6 +17,19 @@ const YTDLP_URL = isWin
 app.use(express.json());
 app.use(express.static(__dirname));
 
+function getLocalCookieFile() {
+  const candidates = [
+    path.join(__dirname, "cookies.txt"),
+    path.join(__dirname, "cookies")
+  ];
+  for (const p of candidates) {
+    if (fs.existsSync(p) && fs.statSync(p).isFile() && fs.statSync(p).size > 0) {
+      return p;
+    }
+  }
+  return null;
+}
+
 function isValidYoutubeUrl(rawUrl) {
   try {
     const u = new URL(rawUrl);
@@ -85,6 +98,14 @@ function runYtDlp(args) {
   });
 }
 
+function cleanupJobFiles(tmpDir, jobId) {
+  try {
+    fs.readdirSync(tmpDir)
+      .filter((f) => f.startsWith(jobId))
+      .forEach((f) => fs.unlink(path.join(tmpDir, f), () => {}));
+  } catch {}
+}
+
 app.post("/api/ytb-to-mp3", async (req, res) => {
   const { url, bitrate } = req.body || {};
   const allowedBitrates = ["128", "192", "256", "320"];
@@ -99,18 +120,23 @@ app.post("/api/ytb-to-mp3", async (req, res) => {
   const tmpDir = os.tmpdir();
   const outTemplate = path.join(tmpDir, `${jobId}.%(ext)s`);
   const finalMp3Path = path.join(tmpDir, `${jobId}.mp3`);
+  const cookieFilePath = getLocalCookieFile();
 
   try {
     await ensureYtDlp();
 
     let title = "youtube_audio";
     try {
-      const { stdout } = await runYtDlp([
+      const metaArgs = [
         cleanUrl,
         "--dump-single-json",
         "--no-warnings",
         "--no-playlist"
-      ]);
+      ];
+      if (cookieFilePath) {
+        metaArgs.push("--cookies", cookieFilePath);
+      }
+      const { stdout } = await runYtDlp(metaArgs);
       const meta = JSON.parse(stdout);
       if (meta && meta.title) title = meta.title;
     } catch {}
@@ -127,6 +153,9 @@ app.post("/api/ytb-to-mp3", async (req, res) => {
       "--no-playlist",
       "--no-warnings"
     ];
+    if (cookieFilePath) {
+      args.push("--cookies", cookieFilePath);
+    }
     if (ffmpegPath) {
       args.push("--ffmpeg-location", ffmpegPath);
     }
@@ -141,6 +170,7 @@ app.post("/api/ytb-to-mp3", async (req, res) => {
           .find((p) => p.startsWith(path.join(tmpDir, jobId)) && p.endsWith(".mp3"));
 
     if (!createdFile || !fs.existsSync(createdFile)) {
+      cleanupJobFiles(tmpDir, jobId);
       return res.status(500).json({ error: "Không xuất được file MP3 từ link YouTube." });
     }
 
@@ -151,15 +181,11 @@ app.post("/api/ytb-to-mp3", async (req, res) => {
 
     const stream = fs.createReadStream(createdFile);
     stream.on("close", () => {
-      fs.unlink(createdFile, () => {});
+      cleanupJobFiles(tmpDir, jobId);
     });
     stream.pipe(res);
   } catch (err) {
-    try {
-      fs.readdirSync(tmpDir)
-        .filter((f) => f.startsWith(jobId))
-        .forEach((f) => fs.unlink(path.join(tmpDir, f), () => {}));
-    } catch {}
+    cleanupJobFiles(tmpDir, jobId);
     res.status(500).json({ error: err?.message || "Lỗi khi lọc MP3 từ link YouTube." });
   }
 });
